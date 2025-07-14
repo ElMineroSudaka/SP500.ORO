@@ -75,8 +75,12 @@ def get_data():
 def calculate_strategy_returns(data, ma_period, commission_rate):
     """Calcula los retornos de la estrategia aplicando comisiones en cada operación."""
     data['Ratio'] = data['SP500'] / data['Gold']
-    # --- CAMBIO: Usar Media Móvil Triangular (TMA) ---
-    data['TMA'] = data['Ratio'].rolling(window=ma_period, win_type='triang').mean()
+    
+    # --- CORRECCIÓN: Calcular TMA manualmente para eliminar la dependencia de SciPy ---
+    # Una TMA es una media móvil doblemente suavizada.
+    tma_period_calc = int(np.ceil((ma_period + 1) / 2))
+    sma1 = data['Ratio'].rolling(window=tma_period_calc).mean()
+    data['TMA'] = sma1.rolling(window=tma_period_calc).mean()
 
     # Generar señal y determinar operaciones
     data['Signal'] = np.where(data['Ratio'] > data['TMA'], 1, 0)
