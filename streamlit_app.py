@@ -76,14 +76,11 @@ def calculate_strategy_returns(data, ma_period, commission_rate):
     """Calcula los retornos de la estrategia aplicando comisiones en cada operación."""
     data['Ratio'] = data['SP500'] / data['Gold']
     
-    # --- CAMBIO: Usar Media Móvil Exponencial Triple (TEMA) ---
-    ema1 = data['Ratio'].ewm(span=ma_period, adjust=False).mean()
-    ema2 = ema1.ewm(span=ma_period, adjust=False).mean()
-    ema3 = ema2.ewm(span=ma_period, adjust=False).mean()
-    data['TEMA'] = 3 * (ema1 - ema2) + ema3
+    # --- CAMBIO: Usar Media Móvil Triangular (TMA) con período completo dos veces ---
+    data['TMA'] = data['Ratio'].rolling(window=ma_period).mean().rolling(window=ma_period).mean()
 
     # Generar señal y determinar operaciones
-    data['Signal'] = np.where(data['Ratio'] > data['TEMA'], 1, 0)
+    data['Signal'] = np.where(data['Ratio'] > data['TMA'], 1, 0)
     data['Trades'] = data['Signal'].diff().abs().fillna(0)
 
     # Calcular retornos base
@@ -96,7 +93,7 @@ def calculate_strategy_returns(data, ma_period, commission_rate):
     commission_cost = data['Trades'] * commission_rate
     final_returns = strategy_return - commission_cost
 
-    return final_returns, data['Trades'].sum(), data[['Ratio', 'TEMA']]
+    return final_returns, data['Trades'].sum(), data[['Ratio', 'TMA']]
 
 def calculate_metrics(returns):
     """Calcula las métricas de rendimiento clave."""
@@ -118,14 +115,14 @@ def calculate_metrics(returns):
         'Máximo Drawdown': max_drawdown
     })
 
-def plot_ratio_tema(ratio_df):
-    """Crea un gráfico interactivo del ratio y su TEMA con Plotly."""
+def plot_ratio_tma(ratio_df):
+    """Crea un gráfico interactivo del ratio y su TMA con Plotly."""
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=ratio_df.index, y=ratio_df['Ratio'], mode='lines', name='Ratio (S&P 500 / Oro)', line=dict(color='#81a1c1', width=1.5)))
-    fig.add_trace(go.Scatter(x=ratio_df.index, y=ratio_df['TEMA'], mode='lines', name='Media Móvil Exponencial Triple (TEMA)', line=dict(color='#ebcb8b', width=2, dash='dash')))
+    fig.add_trace(go.Scatter(x=ratio_df.index, y=ratio_df['TMA'], mode='lines', name='Media Móvil Triangular (TMA)', line=dict(color='#ebcb8b', width=2, dash='dash')))
     
     fig.update_layout(
-        title='Ratio S&P 500 / Oro y su Media Móvil Exponencial Triple',
+        title='Ratio S&P 500 / Oro y su Media Móvil Triangular',
         xaxis_title='Fecha',
         yaxis_title='Ratio',
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
@@ -165,7 +162,7 @@ ma_period = 220 # Fijo
 # --- Barra Lateral con Información y Controles ---
 with st.sidebar:
     st.header("⚙️ Parámetros de la Estrategia")
-    st.info(f"**Media Móvil Exponencial Triple (TEMA):** {ma_period} días (Fijo)")
+    st.info(f"**Media Móvil Triangular (TMA):** {ma_period} días (Fijo)")
     commission_rate = st.number_input(
         "Tasa de Comisión por Operación (%)",
         min_value=0.00, max_value=1.00, value=0.10, step=0.01,
@@ -209,9 +206,9 @@ for i, col in enumerate(cols):
         st.metric("Ratio de Sharpe", f"{metrics.loc[metric_names[i], 'Ratio de Sharpe']:.2f}")
         st.metric("Máximo Drawdown", f"{metrics.loc[metric_names[i], 'Máximo Drawdown']:.2%}")
 
-# Gráfico del Ratio y TEMA (Ahora segundo)
+# Gráfico del Ratio y TMA (Ahora segundo)
 st.header("Análisis del Ratio y la Señal de Trading")
-st.plotly_chart(plot_ratio_tema(ratio_df), use_container_width=True)
+st.plotly_chart(plot_ratio_tma(ratio_df), use_container_width=True)
 
 # Información Adicional
 st.header("Detalles de la Estrategia")
@@ -220,7 +217,7 @@ col1, col2 = st.columns(2)
 with col1:
     # Posición actual
     current_ratio = data['Ratio'].iloc[-1]
-    current_ma = data['TEMA'].iloc[-1]
+    current_ma = data['TMA'].iloc[-1]
     current_position = "Largo en S&P 500" if current_ratio > current_ma else "Largo en Oro"
     st.metric("Posición Actual Sugerida", current_position)
 
