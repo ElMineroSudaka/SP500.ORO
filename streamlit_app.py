@@ -164,7 +164,7 @@ with st.sidebar:
     st.info(f"**Media Móvil Triangular (TMA):** {ma_period} días (Fijo)")
     commission_rate = st.number_input(
         "Tasa de Comisión por Operación (%)",
-        min_value=0.00, max_value=1.00, value=0.10, step=0.01,
+        min_value=0.00, max_value=1.00, value=0.05, step=0.01,
         help="El costo porcentual aplicado a cada compra o venta."
     ) / 100  # Convertir a decimal para cálculos
     st.markdown("La comisión se aplica en cada operación (al cambiar de un activo a otro), simulando el costo de apertura y cierre.")
