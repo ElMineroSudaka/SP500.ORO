@@ -126,7 +126,7 @@ def plot_ratio_sma(ratio_df):
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         template='plotly_dark',
         margin=dict(l=20, r=20, t=40, b=20),
-        height=350,
+        height=450,  # Se aumentó la altura del gráfico
     )
     return fig
 
@@ -144,7 +144,7 @@ def plot_cumulative_returns(cum_returns_df):
         yaxis_type="log",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         template='plotly_dark',
-        height=550  # Se aumentó la altura del gráfico
+        height=700  # Se aumentó la altura del gráfico
     )
     return fig
 
@@ -154,15 +154,18 @@ def plot_cumulative_returns(cum_returns_df):
 st.title("📊 Backtesting: Estrategia S&P 500 vs. Oro")
 st.markdown("Una aplicación para analizar una estrategia de rotación de activos basada en la relación entre el S&P 500 y el Oro.")
 
-# --- Parámetros Fijos de la Estrategia ---
-ma_period = 140
-commission_rate = 0.0010 # 0.10%
+# --- Parámetros de la Estrategia ---
+ma_period = 140 # Fijo
 
-# --- Barra Lateral con Información ---
+# --- Barra Lateral con Información y Controles ---
 with st.sidebar:
-    st.header("⚙️ Parámetros Fijos")
-    st.info(f"**Media Móvil (SMA):** {ma_period} días")
-    st.warning(f"**Comisión:** {commission_rate:.2%}")
+    st.header("⚙️ Parámetros de la Estrategia")
+    st.info(f"**Media Móvil (SMA):** {ma_period} días (Fijo)")
+    commission_rate = st.number_input(
+        "Tasa de Comisión por Operación (%)",
+        min_value=0.00, max_value=1.00, value=0.10, step=0.01,
+        help="El costo porcentual aplicado a cada compra o venta."
+    ) / 100  # Convertir a decimal para cálculos
     st.markdown("La comisión se aplica en cada operación (al cambiar de un activo a otro), simulando el costo de apertura y cierre.")
 
 
